@@ -1,127 +1,130 @@
-BBBPermeator: BBBP Prediction & Drug Discovery Pipeline
+This repository contains a complete pipeline for predicting blood–brain barrier permeability (BBBP) of small molecules using classical machine learning, deep learning, and graph neural networks. The project combines RDKit-based molecular descriptor engineering, robust preprocessing, and multiple models to screen CNS‑relevant compounds from the ChEMBL36 database.
 
-A unified, reproducible pipeline to predict blood–brain barrier permeability (BBBP) of small molecules and enable CNS-relevant compound prioritization for drug discovery, using:
+Project Overview
+Problem: Predict whether a compound is BBB‑permeable (BBB+) or non‑permeable (BBB−) to support CNS drug discovery.
 
-✅ Classical Machine Learning
+Core datasets:
 
-✅ Deep Learning
+BBBP dataset (~2,039 compounds; p_np label, SMILES).
 
-✅ Graph Neural Networks (GCN)
+External CNS‑focused set from ChEMBL36 (4,082 unlabeled molecules) for virtual screening.
 
-🎯 Project Goal
+Models implemented:
 
-Predict whether a compound is:
+Traditional ML: Random Forest, SVM (RBF), XGBoost.
 
-BBB-permeable (BBB+)
+Deep learning: Dense Neural Network (DNN/MLP), 1D‑CNN on descriptor sequences.
 
-Non-permeable (BBB−)
+Graph model: Graph Convolutional Network (GCN) on SMILES‑derived molecular graphs.
 
-to support faster design and screening of CNS drug-like molecules.
+Main goals:
 
-📊 Core Datasets
-Dataset	Contents	Usage
-BBBP (~2,039 compounds)	SMILES, p_np (BBB+/BBB− label)	Model training & evaluation
-ChEMBL36 CNS Set (4,082 unlabeled molecules)	SMILES only	External virtual screening
+Build reproducible, comparable BBBP models on descriptors and graphs.
 
-Screening compounds from ChEMBL36 using trained ML, DL and GCN models to prioritize top candidates for CNS drug discovery.
+Analyze which molecular properties drive BBB permeability.
 
-🤖 Models Implemented
-🔹 Traditional ML
+Screen ChEMBL36 and prioritize candidate CNS‑active molecules.
 
-Random Forest
+Methods
+1. Molecular Descriptors and Feature Engineering
+SMILES strings are converted to RDKit Mol objects.
 
-SVM (RBF Kernel)
+For each molecule, the following descriptors are computed:
 
-XGBoost
+Physicochemical: MolWt, LogP, TPSA, H‑bond donors/acceptors, rotatable bonds, aromatic rings, fraction Csp3, heavy‑atom count, ring count, heteroatom count.
 
-🔹 Deep Learning
+Drug‑likeness: QED, Lipinski violations, DrugLikeness score.
 
-Dense Neural Network (DNN / MLP)
+CNS‑focused: CNS_MPO_Score (0–5, based on MW, LogP, TPSA, HBD, HBA), MolecularFlexibility, PolarSurfaceAreaRatio.
 
-1D-CNN on molecular descriptors
+The function compute_comprehensive_descriptors() returns a clean descriptor DataFrame plus the corresponding valid SMILES.
 
-🔹 Graph Neural Network
+2. Data Preprocessing
+Outlier removal:
 
-Graph Convolutional Network (GCN) using PyTorch Geometric on SMILES-derived molecular graphs
+Interquartile Range (IQR) method applied to all numeric features.
 
-🧬 Feature Engineering (Molecular Descriptors)
+Compounds outside Q1 − 1.5 × IQR or Q3 + 1.5 × IQR for any key descriptor are removed.
 
-SMILES → Mol Objects using RDKit → descriptor calculation via:
+Before/after scatter plots (e.g., MolWt, LogP) illustrate removal of extreme values.
 
-⚗️ Physicochemical Features
+Class imbalance handling:
 
-MolWt, LogP, TPSA
+The BBBP dataset is imbalanced (BBB+ >> BBB−).
 
-H-Bond Donors/Acceptors
+SMOTE is applied only on the training split to oversample the minority class (BBB− or BBB+, depending on encoding) without leaking synthetic samples into the test set.
 
-Rotatable & Aromatic Bonds, Rings
+Bar plots show class counts before and after SMOTE.
 
-Heavy Atom, Heteroatom, Fraction Csp3
+PCA (2D) visualizations display original vs SMOTE‑generated points in feature space.
 
-💊 Drug-Likeness
+3. Model Training
+Training pipeline (BBBP):
 
-QED score
+Cleaned descriptors + p_np label.
 
-Lipinski rule violations
+Stratified train–test split (80/20, random_state=42).
 
-DrugLikeness score
+Standardization with StandardScaler (fit on train, transform train/test).
 
-🧠 CNS-Focused Scores
+SMOTE applied to the training set only.
 
-CNS_MPO_Score (0–5)
+Model training:
 
-Polar Surface Area Ratio
+RandomForest, SVM (RBF), XGBoost (scikit‑learn).
 
-Molecular Flexibility Index
+DNN/MLP (Keras): multi‑layer dense ReLU + dropout, Adam (lr=1e‑3), binary cross‑entropy, early stopping on validation loss.
 
-⚙️ Data Preprocessing Pipeline
+1D‑CNN (Keras): adaptive Conv1D + MaxPooling stacks on shape=(seq_len, 1), Nadam (lr=1e‑3), sigmoid output, early stopping.
 
-Outlier Removal
+GCN (PyTorch Geometric): SMILES → molecular graph (atom features + bond indices) → stacked GCNConv layers → global mean pooling → dense layers → sigmoid output, Adam (lr=1e‑3), BCE loss.
 
-IQR filtering: removes extreme descriptor values
+Evaluation on the original (unbalanced) test set using:
 
-Visualized using before/after scatter plots
+Accuracy, Precision, Recall, F1‑score, ROC‑AUC, confusion matrices.
 
-Class Balancing
+4. External Screening on ChEMBL36
+Descriptor‑based models (RF, SVM, XGBoost, DNN, 1D‑CNN):
 
-SMOTE applied only on training data
+ChEMBL descriptors are computed and scaled using the same StandardScaler fitted on BBBP training data.
 
-Bar chart & PCA plots visualize synthetic sampling
+CNN inputs are reshaped to (n_samples, seq_len, 1).
 
-Scaling
+GCN:
 
-StandardScaler fitted on train, reused for all models & ChEMBL screening
+ChEMBL SMILES are converted to graphs with the same atom/bond featurization as BBBP.
 
-Train/Test Split
+Each model outputs BBB+ probability (*_prediction) and a binary class label (*_class) using a 0.5 threshold.
 
-Stratified 80/20, random_state=42
+A consolidated chembl_predictions table stores, for every molecule:
 
-Evaluation Metrics
+SMILES
 
-Accuracy, Precision, Recall, F1
+Per‑model probability
 
-ROC-AUC, Confusion Matrix
+Per‑model BBB+/BBB− class tag.
 
-🔎 ChEMBL36 Virtual Screening
+This table is used for ranking and intersecting top candidates across models.
 
-Descriptors generated using identical featurization
+Results (BBBP Test Set)
+All models achieve test accuracies in the ~0.81–0.90 range.
 
-Scaled via original BBBP StandardScaler
+XGBoost:
 
-GCN graphs built using the same atom/bond features
+Accuracy ≈ 0.896, F1 ≈ 0.938, AUC ≈ 0.883 (best overall).
 
-Models output:
+Random Forest:
 
-Probability score (*_prediction)
+Accuracy ≈ 0.872, F1 ≈ 0.923 (strong, interpretable baseline).
 
-Class (*_class) using threshold 0.5
+1D‑CNN:
 
-Results stored in a consolidated table for ranking and intersection across models
+Accuracy ≈ 0.838, F1 ≈ 0.900, highest AUC ≈ 0.893.
 
-📈 BBBP Test Results Summary
-Model	Accuracy	F1 Score	AUC	Notes
-XGBoost	~0.896	~0.938	~0.883	🏆 Best overall
-Random Forest	~0.872	~0.923	—	Strong, interpretable
-1D-CNN	~0.838	~0.900	~0.893	Highest AUC
-SVM & DNN	~High precision	~Low recall	—	Conservative models
-GCN	~0.830	~0.910	~0.740	Very high recall (1.0)
+DNN and SVM:
+
+High precision but lower recall (more conservative models).
+
+GCN:
+
+Accuracy ≈ 0.83, precision ≈ 0.83, recall ≈ 1.0, F1 ≈ 0.91, AUC ≈ 0.74 (very high sensitivity to BBB+ at cost of more false positives).
