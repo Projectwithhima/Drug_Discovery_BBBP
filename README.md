@@ -1,9 +1,7 @@
----
 # 🧠 Drug Discovery – BBBP Prediction Pipeline
 *A unified machine-learning, deep-learning, and graph-neural-network workflow for predicting blood–brain barrier permeability.*
 
 ## 📌 Overview
-
 This repository contains a complete end-to-end pipeline for predicting **blood–brain barrier permeability (BBBP)** of small molecules.
 The workflow integrates:
 
@@ -15,7 +13,6 @@ The workflow integrates:
 
 The goal is to support **CNS drug discovery** by identifying compounds likely to penetrate the blood–brain barrier.
 
----
 
 ## 🎯 Problem Statement
 
