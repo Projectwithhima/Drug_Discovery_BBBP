@@ -9,6 +9,10 @@ Core datasets:
 
 BBBP dataset (~2,039 compounds; p_np label, SMILES).
 
+ChChEMBL 36 downloads (all formats): Used this dataset for the external screening and prediction 
+
+Link - https://chembl.gitbook.io/chembl-interface-documentation/downloads
+
 External CNS‑focused set from ChEMBL36 (4,082 unlabeled molecules) for virtual screening.
 
 Models implemented:
