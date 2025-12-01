@@ -130,3 +130,10 @@ High precision but lower recall (more conservative models).
 GCN:
 
 Accuracy ≈ 0.83, precision ≈ 0.83, recall ≈ 1.0, F1 ≈ 0.91, AUC ≈ 0.74 (very high sensitivity to BBB+ at cost of more false positives).
+
+git clone https://github.com/<your-username>/<your-repo>.git
+cd <your-repo>
+python -m venv .venv
+source .venv/bin/activate  # on Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
