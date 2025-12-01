@@ -1,7 +1,6 @@
 ---
 # 🧠 Drug Discovery – BBBP Prediction Pipeline
 *A unified machine-learning, deep-learning, and graph-neural-network workflow for predicting blood–brain barrier permeability.*
----
 
 ## 📌 Overview
 
